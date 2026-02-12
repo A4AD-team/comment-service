@@ -38,4 +38,3 @@ export const CommentSchema = SchemaFactory.createForClass(Comment);
 // Create compound indexes
 CommentSchema.index({ postId: 1, createdAt: -1 });
 CommentSchema.index({ postId: 1, parentCommentId: 1 });
-CommentSchema.index({ authorId: 1 });

@@ -1,4 +1,4 @@
-import { Comment } from '../schemas/comment.schema';
+import { Comment } from './schemas/comment.schema';
 
 export interface CommentResponse {
   commentId: string;
@@ -19,7 +19,14 @@ export interface PaginatedCommentsResponse<T> {
   totalCount: number;
 }
 
+// Extend Comment type to include Mongoose timestamps
+interface CommentWithTimestamps extends Comment {
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export function mapCommentToResponse(comment: Comment): CommentResponse {
+  const commentWithTimestamps = comment as CommentWithTimestamps;
   return {
     commentId: comment.commentId,
     postId: comment.postId,
@@ -28,7 +35,7 @@ export function mapCommentToResponse(comment: Comment): CommentResponse {
     content: comment.isDeleted ? '[deleted]' : comment.content,
     likesCount: comment.likesCount,
     isDeleted: comment.isDeleted,
-    createdAt: comment.createdAt,
-    updatedAt: comment.updatedAt,
+    createdAt: commentWithTimestamps.createdAt,
+    updatedAt: commentWithTimestamps.updatedAt,
   };
 }

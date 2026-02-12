@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   ConflictException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { JSDOM } from 'jsdom';
 import createDOMPurify from 'dompurify';
@@ -21,7 +20,9 @@ import {
 import { CommentEventProducer } from './events/comment.events';
 
 const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window as unknown as Window);
+const DOMPurify = createDOMPurify(
+  window as unknown as Parameters<typeof createDOMPurify>[0],
+);
 
 @Injectable()
 export class CommentsService {

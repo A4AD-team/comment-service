@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery, SortOrder } from 'mongoose';
-import { Comment, CommentDocument } from '../schemas/comment.schema';
+import { Comment, CommentDocument } from './schemas/comment.schema';
 
 export interface PaginatedComments<T> {
   items: T[];
