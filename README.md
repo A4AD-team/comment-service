@@ -38,7 +38,7 @@ comment-service/
 ```bash
 docker compose up -d mongo
 
-npm run start:dev
+pnpm run start:dev
 ```
 
 ## Эндпоинты
