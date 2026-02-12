@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'comment-service'
+    static_configs:
+      - targets: ['comment-service:3000']
+    metrics_path: /metrics
