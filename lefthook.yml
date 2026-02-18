@@ -151,5 +151,10 @@ post-checkout:
 prepare-commit-msg:
   commands:
     show-commit-template:
-      run: 'echo "# Commit message format: <type>[optional scope]: <description>" > {1}'
-      interactive: true
+      run: |
+        # Only show template if no message was provided via -m flag
+        if [ -s {1} ]; then
+          exit 0
+        fi
+        echo "# Commit message format: <type>[optional scope]: <description>" > {1}
+      interactive: false
