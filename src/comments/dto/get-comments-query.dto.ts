@@ -20,7 +20,7 @@ export class GetCommentsQueryDto {
   @Min(1)
   @Max(100)
   @Type(() => Number)
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }: { value: string }) => parseInt(value, 10))
   @IsOptional()
   limit?: number = 20;
 

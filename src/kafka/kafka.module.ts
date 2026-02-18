@@ -7,18 +7,28 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
     ClientsModule.registerAsync([
       {
         name: 'KAFKA_SERVICE',
-        useFactory: (configService: ConfigService) => ({
-          transport: Transport.KAFKA,
-          options: {
-            client: {
-              clientId: configService.get('kafka.clientId'),
-              brokers: configService.get('kafka.brokers'),
+        useFactory: (configService: ConfigService) => {
+          const brokers = configService.get<string[]>('kafka.brokers');
+          const groupId = configService.get<string>('kafka.groupId');
+          if (!brokers || brokers.length === 0) {
+            throw new Error('Kafka brokers configuration is missing or empty');
+          }
+          if (!groupId) {
+            throw new Error('Kafka groupId configuration is missing');
+          }
+          return {
+            transport: Transport.KAFKA,
+            options: {
+              client: {
+                clientId: configService.get('kafka.clientId'),
+                brokers,
+              },
+              consumer: {
+                groupId,
+              },
             },
-            consumer: {
-              groupId: configService.get('kafka.groupId'),
-            },
-          },
-        }),
+          };
+        },
         inject: [ConfigService],
       },
     ]),

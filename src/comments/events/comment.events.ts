@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Histogram } from 'prom-client';
-import { Comment } from './schemas/comment.schema';
+import { Comment } from '../schemas/comment.schema';
 
 export interface CommentEvent {
   eventType: string;
@@ -30,10 +30,7 @@ export class CommentEventProducer {
     private readonly creationDurationHistogram: Histogram<string>,
   ) {}
 
-  async publishCommentCreated(
-    comment: Comment,
-    requestId?: string,
-  ): Promise<void> {
+  publishCommentCreated(comment: Comment, requestId?: string): void {
     this.commentsCreatedCounter.inc({ postId: comment.postId });
 
     const event: CommentEvent = {
@@ -52,10 +49,7 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentUpdated(
-    comment: Comment,
-    requestId?: string,
-  ): Promise<void> {
+  publishCommentUpdated(comment: Comment, requestId?: string): void {
     this.commentsUpdatedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -73,10 +67,7 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentDeleted(
-    comment: Comment,
-    requestId?: string,
-  ): Promise<void> {
+  publishCommentDeleted(comment: Comment, requestId?: string): void {
     this.commentsDeletedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -91,10 +82,7 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentRestored(
-    comment: Comment,
-    requestId?: string,
-  ): Promise<void> {
+  publishCommentRestored(comment: Comment, requestId?: string): void {
     const event: CommentEvent = {
       eventType: 'comment.restored',
       commentId: comment.commentId,
@@ -107,11 +95,11 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentLiked(
+  publishCommentLiked(
     comment: Comment,
     userId: string,
     requestId?: string,
-  ): Promise<void> {
+  ): void {
     this.commentsLikedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -130,11 +118,11 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentUnliked(
+  publishCommentUnliked(
     comment: Comment,
     userId: string,
     requestId?: string,
-  ): Promise<void> {
+  ): void {
     this.commentsUnlikedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -153,11 +141,11 @@ export class CommentEventProducer {
     console.log('Publishing event:', event);
   }
 
-  async publishCommentsBulkDeleted(
+  publishCommentsBulkDeleted(
     postId: string,
     count: number,
     requestId?: string,
-  ): Promise<void> {
+  ): void {
     const event = {
       eventType: 'comments.bulk_deleted',
       postId,

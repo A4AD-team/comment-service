@@ -1,4 +1,4 @@
-import { Comment } from './schemas/comment.schema';
+import { Comment } from '../schemas/comment.schema';
 
 export interface CommentResponse {
   commentId: string;

@@ -5,7 +5,9 @@ export const CurrentUser = createParamDecorator(
     data: keyof { userId: string; isModerator: boolean } | undefined,
     ctx: ExecutionContext,
   ) => {
-    const request = ctx.switchToHttp().getRequest();
+    const request = ctx.switchToHttp().getRequest<{
+      headers: Record<string, string>;
+    }>();
     const user = {
       userId: request.headers['x-user-id'],
       isModerator: request.headers['x-is-moderator'] === 'true',
