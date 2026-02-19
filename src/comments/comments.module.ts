@@ -9,10 +9,12 @@ import {
   makeCounterProvider,
   makeHistogramProvider,
 } from '@willsoto/nestjs-prometheus';
+import { RabbitMQModuleConfig } from '../rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Comment.name, schema: CommentSchema }]),
+    RabbitMQModuleConfig,
   ],
   controllers: [CommentsController],
   providers: [

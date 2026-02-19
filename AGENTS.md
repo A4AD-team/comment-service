@@ -14,12 +14,12 @@ pnpm start:prod            # Run production build
 
 # Testing
 pnpm test                  # Run all tests
-pnpm test -- <pattern>     # Run tests matching pattern (file name or describe/it)
-pnpm test -- comments.service  # Run specific test file
-pnpm test -- --testNamePattern="should create"  # Run specific test
+pnpm test -- comments.service  # Run specific test file (uses jest pattern)
+pnpm test -- --testNamePattern="should create"  # Run specific test by name
+pnpm test -- --testNamePattern="CommentsService"  # Run tests in describe block
 pnpm test -- --bail        # Stop on first failure
 pnpm test:watch            # Watch mode
-pnpm test:cov              # Coverage report
+pnpm test:cov              # Coverage report (requires 90% threshold)
 pnpm test:debug            # Debug tests with inspector
 pnpm test:e2e              # End-to-end tests
 
@@ -125,6 +125,11 @@ Examples:
 
 Create pull requests for all changes to protected branches.
 
+## API Documentation
+
+Swagger documentation is available at `/api` when the application is running.
+Use `@ApiTags`, `@ApiOperation`, `@ApiResponse` decorators on controllers.
+
 ## Project Structure
 
 ```
@@ -148,6 +153,11 @@ Required in `.env`:
 - `MONGODB_URI` - MongoDB connection string
 - `KAFKA_BROKERS` - Kafka broker list
 - `PORT` - Server port (default: 3000)
+- `REDIS_HOST` / `REDIS_PORT` - Redis for rate limiting
+- `RATE_LIMIT_MAX` / `RATE_LIMIT_WINDOW` - Rate limiting config
+- `LOG_LEVEL` - Logging level (info, debug, etc.)
+
+Copy `.env.example` to `.env` and configure for your environment.
 
 Never commit `.env` files - they're in `.gitignore`.
 

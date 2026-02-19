@@ -31,6 +31,9 @@ export class Comment {
 
   @Prop()
   deletedBy?: string;
+
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
