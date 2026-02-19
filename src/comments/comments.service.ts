@@ -47,7 +47,7 @@ export class CommentsService {
       isDeleted: false,
     });
 
-    this.eventProducer.publishCommentCreated(comment, requestId);
+    await this.eventProducer.publishCommentCreated(comment, requestId);
 
     return mapCommentToResponse(comment);
   }
@@ -116,7 +116,7 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    this.eventProducer.publishCommentUpdated(updated, requestId);
+    await this.eventProducer.publishCommentUpdated(updated, requestId);
 
     return mapCommentToResponse(updated);
   }
@@ -144,7 +144,7 @@ export class CommentsService {
     const deleted = await this.commentsRepository.softDelete(commentId, userId);
 
     if (deleted) {
-      this.eventProducer.publishCommentDeleted(deleted, requestId);
+      await this.eventProducer.publishCommentDeleted(deleted, requestId);
     }
   }
 
@@ -169,7 +169,7 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    this.eventProducer.publishCommentRestored(restored, requestId);
+    await this.eventProducer.publishCommentRestored(restored, requestId);
 
     return mapCommentToResponse(restored);
   }
@@ -195,7 +195,7 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    this.eventProducer.publishCommentLiked(liked, userId, requestId);
+    await this.eventProducer.publishCommentLiked(liked, userId, requestId);
 
     return mapCommentToResponse(liked);
   }
@@ -217,7 +217,7 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    this.eventProducer.publishCommentUnliked(unliked, userId, requestId);
+    await this.eventProducer.publishCommentUnliked(unliked, userId, requestId);
 
     return mapCommentToResponse(unliked);
   }
@@ -226,7 +226,11 @@ export class CommentsService {
     const count = await this.commentsRepository.softDeleteByPostId(postId);
 
     if (count > 0) {
-      this.eventProducer.publishCommentsBulkDeleted(postId, count, requestId);
+      await this.eventProducer.publishCommentsBulkDeleted(
+        postId,
+        count,
+        requestId,
+      );
     }
 
     return count;
