@@ -35,4 +35,4 @@ async function bootstrap(): Promise<void> {
   logger.log(`Comment service is running on port ${port}`);
 }
 
-bootstrap();
+void bootstrap();

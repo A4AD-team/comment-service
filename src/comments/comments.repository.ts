@@ -118,9 +118,11 @@ export class CommentsRepository {
     let nextCursor: string | undefined;
     if (hasMore && items.length > 0) {
       const lastItem = items[items.length - 1];
-      nextCursor = Buffer.from(lastItem.createdAt.toISOString()).toString(
-        'base64',
-      );
+      if (lastItem.createdAt) {
+        nextCursor = Buffer.from(lastItem.createdAt.toISOString()).toString(
+          'base64',
+        );
+      }
     }
 
     const totalCount = await this.commentModel

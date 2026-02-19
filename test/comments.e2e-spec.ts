@@ -1,5 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -30,7 +33,7 @@ describe('CommentsController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipe();
+    app.useGlobalPipes();
 
     commentModel = moduleFixture.get<Model<Comment>>(
       getModelToken(Comment.name),

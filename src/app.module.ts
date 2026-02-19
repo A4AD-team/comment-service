@@ -34,7 +34,7 @@ import redisConfig from './config/redis.config';
     PrometheusModule.register(),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('database.mongodb.uri'),
       }),
       inject: [ConfigService],
