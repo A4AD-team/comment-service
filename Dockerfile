@@ -3,29 +3,35 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy pnpm files
+COPY pnpm-lock.yaml package.json ./
+
 # Install dependencies
-COPY package*.json ./
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build application
-RUN npm run build
+RUN pnpm build
 
 # Production stage
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Install curl for healthchecks
-RUN apk add --no-cache curl
+# Install pnpm and curl for healthchecks
+RUN corepack enable && corepack prepare pnpm@latest --activate && \
+    apk add --no-cache curl
 
-# Copy package files
-COPY package*.json ./
+# Copy pnpm files
+COPY pnpm-lock.yaml package.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production && npm cache clean --force
+RUN pnpm install --frozen-lockfile --prod
 
 # Copy built application
 COPY --from=builder /app/dist ./dist

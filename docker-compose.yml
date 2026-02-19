@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   comment-service:
     build:
@@ -14,15 +12,13 @@ services:
       - MONGODB_URI=mongodb://mongo:27017/comment-service
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - KAFKA_BROKERS=kafka:9092
-      - KAFKA_CLIENT_ID=comment-service
-      - KAFKA_GROUP_ID=comment-service-group
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672
     depends_on:
       mongo:
         condition: service_healthy
       redis:
         condition: service_healthy
-      kafka:
+      rabbitmq:
         condition: service_healthy
     networks:
       - a4ad-network
@@ -70,51 +66,26 @@ services:
       retries: 5
       start_period: 5s
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: comment-service-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - a4ad-network
-    restart: unless-stopped
-    healthcheck:
-      test: ['CMD', 'bash', '-c', "echo 'ruok' | nc localhost 2181"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: comment-service-kafka
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: comment-service-rabbitmq
     ports:
-      - '9092:9092'
+      - '5672:5672'
+      - '15672:15672'
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - a4ad-network
     restart: unless-stopped
     healthcheck:
-      test:
-        [
-          'CMD',
-          'kafka-broker-api-versions',
-          '--bootstrap-server',
-          'localhost:9092',
-        ]
+      test: ['CMD', 'rabbitmq-diagnostics', 'check_running']
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s
+      start_period: 10s
 
   prometheus:
     image: prom/prometheus:latest
@@ -130,6 +101,7 @@ services:
 volumes:
   mongo-data:
   redis-data:
+  rabbitmq-data:
 
 networks:
   a4ad-network:

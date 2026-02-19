@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AmqpConnection } from '@golevelup/nestjs-rabbitmq';
 import { InjectMetric } from '@willsoto/nestjs-prometheus';
 import { Counter, Histogram } from 'prom-client';
 import { Comment } from '../schemas/comment.schema';
@@ -16,6 +17,7 @@ export interface CommentEvent {
 @Injectable()
 export class CommentEventProducer {
   constructor(
+    private readonly amqpConnection: AmqpConnection,
     @InjectMetric('comments_created_total')
     private readonly commentsCreatedCounter: Counter<string>,
     @InjectMetric('comments_updated_total')
@@ -30,7 +32,10 @@ export class CommentEventProducer {
     private readonly creationDurationHistogram: Histogram<string>,
   ) {}
 
-  publishCommentCreated(comment: Comment, requestId?: string): void {
+  async publishCommentCreated(
+    comment: Comment,
+    requestId?: string,
+  ): Promise<void> {
     this.commentsCreatedCounter.inc({ postId: comment.postId });
 
     const event: CommentEvent = {
@@ -46,10 +51,13 @@ export class CommentEventProducer {
       },
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.created', event);
   }
 
-  publishCommentUpdated(comment: Comment, requestId?: string): void {
+  async publishCommentUpdated(
+    comment: Comment,
+    requestId?: string,
+  ): Promise<void> {
     this.commentsUpdatedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -64,10 +72,13 @@ export class CommentEventProducer {
       },
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.updated', event);
   }
 
-  publishCommentDeleted(comment: Comment, requestId?: string): void {
+  async publishCommentDeleted(
+    comment: Comment,
+    requestId?: string,
+  ): Promise<void> {
     this.commentsDeletedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -79,10 +90,13 @@ export class CommentEventProducer {
       requestId,
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.deleted', event);
   }
 
-  publishCommentRestored(comment: Comment, requestId?: string): void {
+  async publishCommentRestored(
+    comment: Comment,
+    requestId?: string,
+  ): Promise<void> {
     const event: CommentEvent = {
       eventType: 'comment.restored',
       commentId: comment.commentId,
@@ -92,14 +106,14 @@ export class CommentEventProducer {
       requestId,
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.restored', event);
   }
 
-  publishCommentLiked(
+  async publishCommentLiked(
     comment: Comment,
     userId: string,
     requestId?: string,
-  ): void {
+  ): Promise<void> {
     this.commentsLikedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -115,14 +129,14 @@ export class CommentEventProducer {
       },
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.liked', event);
   }
 
-  publishCommentUnliked(
+  async publishCommentUnliked(
     comment: Comment,
     userId: string,
     requestId?: string,
-  ): void {
+  ): Promise<void> {
     this.commentsUnlikedCounter.inc({ commentId: comment.commentId });
 
     const event: CommentEvent = {
@@ -138,22 +152,28 @@ export class CommentEventProducer {
       },
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish('comments', 'comment.unliked', event);
   }
 
-  publishCommentsBulkDeleted(
+  async publishCommentsBulkDeleted(
     postId: string,
     count: number,
     requestId?: string,
-  ): void {
-    const event = {
+  ): Promise<void> {
+    const event: CommentEvent = {
       eventType: 'comments.bulk_deleted',
+      commentId: '',
       postId,
-      count,
+      authorId: '',
       timestamp: new Date().toISOString(),
       requestId,
+      payload: { count },
     };
 
-    console.log('Publishing event:', event);
+    await this.amqpConnection.publish(
+      'comments',
+      'comments.bulk_deleted',
+      event,
+    );
   }
 }

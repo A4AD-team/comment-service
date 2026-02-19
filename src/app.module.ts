@@ -5,18 +5,17 @@ import { TerminusModule } from '@nestjs/terminus';
 import { LoggerModule } from 'nestjs-pino';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { CommentsModule } from './comments/comments.module';
-import { KafkaModule } from './kafka/kafka.module';
+import { RabbitMQModuleConfig } from './rabbitmq/rabbitmq.module';
 import { HealthModule } from './health/health.module';
 import appConfig from './config/app.config';
 import databaseConfig from './config/database.config';
-import kafkaConfig from './config/kafka.config';
 import redisConfig from './config/redis.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig, kafkaConfig, redisConfig],
+      load: [appConfig, databaseConfig, redisConfig],
       envFilePath: ['.env', '.env.local'],
     }),
     LoggerModule.forRoot({
@@ -41,7 +40,7 @@ import redisConfig from './config/redis.config';
     }),
     TerminusModule,
     CommentsModule,
-    KafkaModule,
+    RabbitMQModuleConfig,
     HealthModule,
   ],
 })
