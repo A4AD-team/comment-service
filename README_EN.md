@@ -6,15 +6,17 @@
   <img src="https://img.shields.io/badge/NestJS-10+-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS">
   <img src="https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/MongoDB-7+-47A248?style=flat-square&logo=mongodb&logoColor=white" alt="MongoDB">
+  <img src="https://img.shields.io/badge/RabbitMQ-3+-FF6600?style=flat-square&logo=rabbitmq&logoColor=white" alt="RabbitMQ">
   <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="License">
-  <img src="https://img.shields.io/badge/Status-Early%20Development-orange?style=flat-square" alt="Status">
 </p>
 
 ---
 
 ## 📝 Overview
 
-**Comment Service** manages threaded discussions and replies for the A4AD Forum. It supports nested comment trees, soft deletion, likes on comments, and real-time notifications via Kafka events. Built with MongoDB for flexible document storage.
+**Comment Service** manages threaded discussions and replies for the A4AD Forum. It supports nested comment trees, soft deletion, likes on comments, and real-time notifications via RabbitMQ events. Built with MongoDB for flexible document storage.
+
+The service supports both REST API and RabbitMQ RPC for communication.
 
 ---
 
@@ -25,9 +27,9 @@
 - 👍 **Comment Likes** — Like/unlike system with counters
 - 🗑️ **Soft Deletion** — Comments marked as deleted but preserved
 - 📄 **Pagination** — Cursor-based pagination for large threads
-- 🔍 **Mention Support** — @username mentions with notifications
-- 📊 **Comment Stats** — Track likes, replies, and engagement
-- ⚡ **Real-time Events** — Kafka events for comment notifications
+- ⚡ **Dual Communication** — REST API + RabbitMQ RPC
+- 📚 **Swagger Documentation** — Interactive API docs at `/api`
+- 🔄 **Event Publishing** — RabbitMQ events for comment actions
 
 ---
 
@@ -37,10 +39,11 @@
 - **Language:** TypeScript 5.0+
 - **Database:** MongoDB 7+
 - **ODM:** Mongoose / @nestjs/mongoose
+- **Message Broker:** RabbitMQ (@golevelup/nestjs-rabbitmq)
+- **Cache/Rate Limit:** Redis
 - **Validation:** class-validator + class-transformer
-- **Events:** Kafka (@nestjs/microservices)
-- **Testing:** Jest + Supertest
 - **Documentation:** Swagger/OpenAPI
+- **Testing:** Jest + Supertest
 
 ---
 
@@ -48,15 +51,12 @@
 
 ```mermaid
 flowchart LR
-    Gateway["API Gateway<br/>Go + Fiber"] --> Comment["Comment Service<br/>NestJS + TypeScript"]
+    Gateway["API Gateway"] --> Comment["Comment Service<br/>NestJS + TypeScript"]
     Comment --> MongoDB[("MongoDB<br/>Comments Collection")]
-    Comment --> Kafka[("Kafka<br/>Comment Events")]
-    
-    Kafka -.->|"comment.created"| Notification["Notification Service<br/>NestJS"]
-    Kafka -.->|"comment.liked"| Notification
-    Kafka -.->|"mention.created"| Notification
-    
-    Post["Post Service<br/>Go"] -.->|"Post validation"| Comment
+    Comment --> RabbitMQ[("RabbitMQ<br/>Events & RPC")]
+
+    RabbitMQ -.->|"comment.created"| Notification["Notification Service"]
+    RabbitMQ -.->|"comment.liked"| Notification
 ```
 
 ---
@@ -68,149 +68,165 @@ flowchart LR
 - Node.js 20+
 - pnpm (recommended) or npm
 - MongoDB 7+
+- RabbitMQ 3+
 - Docker & Docker Compose (optional)
 
 ### Installation
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/A4AD-team/comment-service.git
    cd comment-service
    ```
 
 2. **Install dependencies:**
+
    ```bash
    pnpm install
-   # or: npm install
    ```
 
-3. **Start MongoDB:**
+3. **Start infrastructure:**
+
    ```bash
-   docker compose up -d mongodb
+   docker compose up -d
    ```
 
 4. **Configure environment:**
+
    ```bash
    cp .env.example .env
-   # Edit .env with your MongoDB connection string
+   # Edit .env with your configuration
    ```
 
 5. **Run the service:**
+
    ```bash
    # Development mode with hot reload
-   pnpm run start:dev
+   pnpm start:dev
 
    # Production build
-   pnpm run build
-   pnpm run start:prod
+   pnpm build
+   pnpm start:prod
    ```
 
-The service will be available at `http://localhost:8084`
+The service will be available at `http://localhost:3000`
 
 ---
 
 ## 🔧 Environment Variables
 
-| Variable | Description | Default | Required |
-|----------|-------------|---------|----------|
-| `NODE_ENV` | Environment (development, production) | `development` | No |
-| `PORT` | HTTP server port | `8084` | No |
-| `MONGODB_URI` | MongoDB connection string | `mongodb://localhost:27017/comment_db` | Yes |
-| `MONGODB_DB_NAME` | MongoDB database name | `comment_db` | No |
-| `JWT_SECRET` | JWT validation secret | `` | Yes |
-| `KAFKA_BROKERS` | Kafka broker addresses | `localhost:9092` | No |
-| `KAFKA_CLIENT_ID` | Kafka client ID | `comment-service` | No |
-| `KAFKA_GROUP_ID` | Kafka consumer group | `comment-service-group` | No |
-| `MAX_COMMENT_DEPTH` | Maximum nesting depth | `10` | No |
-| `MAX_COMMENT_LENGTH` | Maximum comment length | `10000` | No |
-| `COMMENTS_PER_PAGE` | Default pagination limit | `50` | No |
-| `ENABLE_SOFT_DELETE` | Enable soft deletion | `true` | No |
-| `LOG_LEVEL` | Logging level | `info` | No |
-| `SWAGGER_ENABLED` | Enable Swagger docs | `true` | No |
+| Variable            | Description                           | Default                                     |
+| ------------------- | ------------------------------------- | ------------------------------------------- |
+| `NODE_ENV`          | Environment (development, production) | `development`                               |
+| `PORT`              | HTTP server port                      | `3000`                                      |
+| `MONGODB_URI`       | MongoDB connection string             | `mongodb://localhost:27017/comment-service` |
+| `RABBITMQ_URI`      | RabbitMQ connection string            | `amqp://guest:guest@localhost:5672`         |
+| `REDIS_HOST`        | Redis host                            | `localhost`                                 |
+| `REDIS_PORT`        | Redis port                            | `6379`                                      |
+| `RATE_LIMIT_MAX`    | Max requests per window               | `30`                                        |
+| `RATE_LIMIT_WINDOW` | Rate limit window (seconds)           | `60`                                        |
+| `LOG_LEVEL`         | Logging level                         | `info`                                      |
 
 ---
 
 ## 📡 API Endpoints
 
-### Comments
+### REST API
 
-| Method | Path | Description | Auth Required |
-|--------|------|-------------|---------------|
-| `GET` | `/api/v1/comments` | List comments for a post (query: `?postId=xxx`) | No |
-| `POST` | `/api/v1/comments` | Create a new comment | Yes |
-| `GET` | `/api/v1/comments/:id` | Get single comment with replies | No |
-| `PATCH` | `/api/v1/comments/:id` | Update own comment | Yes |
-| `DELETE` | `/api/v1/comments/:id` | Soft delete own comment | Yes |
-| `POST` | `/api/v1/comments/:id/like` | Like a comment | Yes |
-| `DELETE` | `/api/v1/comments/:id/like` | Unlike a comment | Yes |
+| Method   | Path                           | Description                          |
+| -------- | ------------------------------ | ------------------------------------ |
+| `POST`   | `/comments`                    | Create a new comment                 |
+| `GET`    | `/comments`                    | List comments (query: `?postId=xxx`) |
+| `GET`    | `/comments/:commentId`         | Get single comment                   |
+| `PATCH`  | `/comments/:commentId`         | Update comment                       |
+| `DELETE` | `/comments/:commentId`         | Soft delete comment                  |
+| `POST`   | `/comments/:commentId/like`    | Like a comment                       |
+| `DELETE` | `/comments/:commentId/like`    | Unlike a comment                     |
+| `POST`   | `/comments/:commentId/restore` | Restore comment                      |
 
 ### Query Parameters
 
-| Parameter | Description | Default |
-|-----------|-------------|---------|
-| `postId` | Filter by post ID | Required for list |
-| `limit` | Comments per page | `50` |
-| `cursor` | Pagination cursor | `` |
-| `sort` | Sort order: `newest`, `oldest`, `popular` | `newest` |
-| `includeDeleted` | Include soft-deleted comments | `false` |
+| Parameter | Description               | Default           |
+| --------- | ------------------------- | ----------------- |
+| `postId`  | Filter by post ID         | Required for list |
+| `limit`   | Comments per page         | `20`              |
+| `cursor`  | Pagination cursor         | -                 |
+| `sort`    | Sort order: `asc`, `desc` | `desc`            |
 
-### Example Comment Response
+### Swagger
+
+API documentation is available at: `http://localhost:3000/api`
+
+---
+
+## 🐇 RabbitMQ RPC
+
+The service exposes RPC endpoints for asynchronous communication.
+
+### Routing Keys
+
+| Routing Key       | Description        |
+| ----------------- | ------------------ |
+| `comment.create`  | Create a comment   |
+| `comment.getAll`  | List comments      |
+| `comment.get`     | Get single comment |
+| `comment.update`  | Update comment     |
+| `comment.delete`  | Delete comment     |
+| `comment.like`    | Like comment       |
+| `comment.unlike`  | Unlike comment     |
+| `comment.restore` | Restore comment    |
+
+### Request Format
 
 ```json
 {
-  "id": "comment-uuid",
-  "postId": "post-uuid",
-  "parentCommentId": null,
-  "authorId": "user-uuid",
-  "author": {
-    "username": "johndoe",
-    "avatarUrl": "https://cdn.example.com/avatars/johndoe.png"
-  },
-  "content": "This is a great post! Thanks for sharing.",
-  "mentions": [],
-  "likesCount": 15,
-  "isLikedByMe": true,
-  "repliesCount": 3,
-  "isDeleted": false,
-  "createdAt": "2026-02-11T10:30:00Z",
-  "updatedAt": "2026-02-11T10:30:00Z",
-  "replies": [
-    {
-      "id": "reply-uuid",
-      "parentCommentId": "comment-uuid",
-      "authorId": "user-uuid-2",
-      "content": "I agree! Very helpful.",
-      "likesCount": 5,
-      "isDeleted": false
-    }
-  ]
+  "requestId": "uuid",
+  "timestamp": "2026-02-20T12:00:00Z",
+  "postId": "uuid",
+  "content": "Comment text",
+  "authorId": "uuid"
 }
+```
+
+### Response Format
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": { "code": "ERROR_CODE", "message": "Error message" },
+  "requestId": "uuid"
+}
+```
+
+### Example RPC Call
+
+```typescript
+const response = await amqpConnection.request({
+  exchange: 'comments',
+  routingKey: 'comment.create',
+  payload: {
+    requestId: 'uuid',
+    timestamp: new Date().toISOString(),
+    postId: 'post-uuid',
+    content: 'Hello world',
+    authorId: 'user-uuid',
+  },
+  timeout: 10000,
+});
 ```
 
 ---
 
 ## 🩺 Health Checks
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | `GET` | Overall health status |
-| `/health/live` | `GET` | Liveness probe |
-| `/health/ready` | `GET` | Readiness probe (checks MongoDB) |
-| `/api/docs` | `GET` | Swagger API documentation |
-
-### Example Response
-
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-02-12T15:30:00Z",
-  "version": "0.1.0",
-  "checks": {
-    "mongodb": "connected",
-    "kafka": "connected"
-  }
-}
-```
+| Endpoint        | Method | Description                      |
+| --------------- | ------ | -------------------------------- |
+| `/health`       | `GET`  | Overall health status            |
+| `/health/live`  | `GET`  | Liveness probe                   |
+| `/health/ready` | `GET`  | Readiness probe (checks MongoDB) |
+| `/api`          | `GET`  | Swagger API documentation        |
 
 ---
 
@@ -221,13 +237,13 @@ The service will be available at `http://localhost:8084`
 pnpm test
 
 # Run tests with coverage
-pnpm test -- --coverage
+pnpm test:cov
 
 # Run tests in watch mode
 pnpm test:watch
 
 # Run specific test
-pnpm test -- comment.service.spec
+pnpm test comments
 
 # Run e2e tests
 pnpm test:e2e

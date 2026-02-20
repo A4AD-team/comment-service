@@ -14,7 +14,7 @@ pnpm start:prod            # Run production build
 
 # Testing
 pnpm test                  # Run all tests
-pnpm test -- comments.service  # Run specific test file (uses jest pattern)
+pnpm test comments         # Run tests matching "comments" (Jest pattern)
 pnpm test -- --testNamePattern="should create"  # Run specific test by name
 pnpm test -- --testNamePattern="CommentsService"  # Run tests in describe block
 pnpm test -- --bail        # Stop on first failure
@@ -22,6 +22,9 @@ pnpm test:watch            # Watch mode
 pnpm test:cov              # Coverage report (requires 90% threshold)
 pnpm test:debug            # Debug tests with inspector
 pnpm test:e2e              # End-to-end tests
+
+# Formatting check (without auto-fix)
+pnpm format:check          # Check if files are formatted
 
 # Linting and Formatting
 pnpm lint                  # ESLint check
@@ -54,6 +57,7 @@ pnpm format                # Prettier format all files
 - Single quotes: `true`
 - Trailing commas: `all`
 - End of line: auto (LF/CRLF handled automatically)
+- Files: `.prettierrc` contains the config
 
 ### Imports Order
 
@@ -124,6 +128,13 @@ Examples:
 - `hotfix/*` - Hotfix branches
 
 Create pull requests for all changes to protected branches.
+
+## Testing Patterns
+
+- Tests use `mongodb-memory-server` for MongoDB
+- Test setup in `test/setup.ts`
+- Use `@nestjs/testing` module utilities for mocking
+- Co-locate tests as `*.spec.ts` next to source files
 
 ## API Documentation
 

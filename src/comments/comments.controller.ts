@@ -13,7 +13,8 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiBearerAuth,
+  ApiHeader,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
@@ -25,16 +26,22 @@ import {
 } from './interfaces/comment-response.interface';
 
 @ApiTags('Comments')
-@ApiBearerAuth()
 @Controller('comments')
 export class CommentsController {
   constructor(private readonly commentsService: CommentsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Create a new comment' })
-  @ApiResponse({ status: 201, description: 'Comment created successfully' })
+  @ApiCreatedResponse({
+    description: 'Comment created successfully',
+  })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async create(
     @Body() createCommentDto: CreateCommentDto,
     @Headers('x-request-id') requestId?: string,
@@ -44,7 +51,11 @@ export class CommentsController {
 
   @Get()
   @ApiOperation({ summary: 'Get comments with cursor-based pagination' })
-  @ApiResponse({ status: 200, description: 'Comments retrieved successfully' })
+  @ApiResponse({
+    type: Object,
+    status: 200,
+    description: 'Comments retrieved successfully',
+  })
   async findAll(
     @Query() query: GetCommentsQueryDto,
   ): Promise<PaginatedCommentsResponse<CommentResponse>> {
@@ -53,7 +64,10 @@ export class CommentsController {
 
   @Get(':commentId')
   @ApiOperation({ summary: 'Get a single comment by ID' })
-  @ApiResponse({ status: 200, description: 'Comment found' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment found',
+  })
   @ApiResponse({ status: 404, description: 'Comment not found' })
   async findOne(
     @Param('commentId') commentId: string,
@@ -63,9 +77,22 @@ export class CommentsController {
 
   @Patch(':commentId')
   @ApiOperation({ summary: 'Update a comment' })
-  @ApiResponse({ status: 200, description: 'Comment updated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment updated successfully',
+  })
   @ApiResponse({ status: 403, description: 'Forbidden - not the author' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'User ID (UUID)',
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async update(
     @Param('commentId') commentId: string,
     @Body() updateCommentDto: UpdateCommentDto,
@@ -88,6 +115,21 @@ export class CommentsController {
     description: 'Forbidden - not the author or moderator',
   })
   @ApiResponse({ status: 404, description: 'Comment not found' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'User ID (UUID)',
+  })
+  @ApiHeader({
+    name: 'x-is-moderator',
+    required: false,
+    description: 'Is user a moderator',
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async remove(
     @Param('commentId') commentId: string,
     @Headers('x-user-id') userId: string,
@@ -104,8 +146,21 @@ export class CommentsController {
 
   @Post(':commentId/like')
   @ApiOperation({ summary: 'Like a comment' })
-  @ApiResponse({ status: 200, description: 'Comment liked successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment liked successfully',
+  })
   @ApiResponse({ status: 404, description: 'Comment not found' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'User ID (UUID)',
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async like(
     @Param('commentId') commentId: string,
     @Headers('x-user-id') userId: string,
@@ -116,8 +171,21 @@ export class CommentsController {
 
   @Delete(':commentId/like')
   @ApiOperation({ summary: 'Unlike a comment' })
-  @ApiResponse({ status: 200, description: 'Comment unliked successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment unliked successfully',
+  })
   @ApiResponse({ status: 404, description: 'Comment not found' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'User ID (UUID)',
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async unlike(
     @Param('commentId') commentId: string,
     @Headers('x-user-id') userId: string,
@@ -128,9 +196,22 @@ export class CommentsController {
 
   @Post(':commentId/restore')
   @ApiOperation({ summary: 'Restore a soft-deleted comment' })
-  @ApiResponse({ status: 200, description: 'Comment restored successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Comment restored successfully',
+  })
   @ApiResponse({ status: 403, description: 'Forbidden - not the author' })
   @ApiResponse({ status: 404, description: 'Comment not found' })
+  @ApiHeader({
+    name: 'x-user-id',
+    required: true,
+    description: 'User ID (UUID)',
+  })
+  @ApiHeader({
+    name: 'x-request-id',
+    required: false,
+    description: 'Request correlation ID',
+  })
   async restore(
     @Param('commentId') commentId: string,
     @Headers('x-user-id') userId: string,

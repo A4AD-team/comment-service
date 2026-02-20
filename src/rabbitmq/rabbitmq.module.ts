@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
+import { CommentsRpcService } from './comments-rpc.service';
+import { CommentsRpcController } from './comments-rpc.controller';
 
 @Module({
   imports: [
@@ -19,8 +21,11 @@ import { RabbitMQModule } from '@golevelup/nestjs-rabbitmq';
           type: 'topic',
         },
       ],
+      enableControllerDiscovery: true,
     }),
   ],
+  providers: [CommentsRpcService],
+  controllers: [CommentsRpcController],
   exports: [RabbitMQModule],
 })
 export class RabbitMQModuleConfig {}
