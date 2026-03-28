@@ -18,6 +18,8 @@ import {
   mapCommentToResponse,
 } from './interfaces/comment-response.interface';
 import { CommentEventProducer } from './events/comment.events';
+import { PostServiceClient } from '../common/post.service';
+import { ProfileServiceClient } from '../common/profile.service';
 
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(
@@ -29,6 +31,8 @@ export class CommentsService {
   constructor(
     private readonly commentsRepository: CommentsRepository,
     private readonly eventProducer: CommentEventProducer,
+    private readonly postServiceClient: PostServiceClient,
+    private readonly profileServiceClient: ProfileServiceClient,
   ) {}
 
   async create(
@@ -42,11 +46,13 @@ export class CommentsService {
       postId: createCommentDto.postId,
       parentCommentId: createCommentDto.parentCommentId,
       authorId: createCommentDto.authorId,
+      authorUsername: createCommentDto.authorUsername || 'Unknown',
       content: sanitizedContent,
       likesCount: 0,
       isDeleted: false,
     });
 
+    await this.postServiceClient.incrementCommentCount(createCommentDto.postId);
     await this.eventProducer.publishCommentCreated(comment, requestId);
 
     return mapCommentToResponse(comment);
@@ -67,8 +73,15 @@ export class CommentsService {
         query.sort,
       );
 
+    const items = await Promise.all(
+      result.items.map(async (comment) => {
+        const username = comment.authorUsername || await this.profileServiceClient.getUsernameById(comment.authorId);
+        return mapCommentToResponse(comment, username);
+      })
+    );
+
     return {
-      items: result.items.map(mapCommentToResponse),
+      items,
       nextCursor: result.nextCursor,
       totalCount: result.totalCount,
     };
@@ -81,7 +94,8 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    return mapCommentToResponse(comment);
+    const username = comment.authorUsername || await this.profileServiceClient.getUsernameById(comment.authorId);
+    return mapCommentToResponse(comment, username);
   }
 
   async update(
@@ -144,6 +158,7 @@ export class CommentsService {
     const deleted = await this.commentsRepository.softDelete(commentId, userId);
 
     if (deleted) {
+      await this.postServiceClient.decrementCommentCount(deleted.postId);
       await this.eventProducer.publishCommentDeleted(deleted, requestId);
     }
   }
@@ -234,5 +249,9 @@ export class CommentsService {
     }
 
     return count;
+  }
+
+  async countByPostId(postId: string): Promise<number> {
+    return this.commentsRepository.countByPostId(postId);
   }
 }

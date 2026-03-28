@@ -1,10 +1,10 @@
-import { IsUUID, IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetCommentsQueryDto {
-  @ApiPropertyOptional({ description: 'Post ID to filter comments' })
-  @IsUUID()
+  @ApiPropertyOptional({ description: 'Post ID to filter comments (UUID or numeric string)' })
+  @IsString()
   @IsOptional()
   postId?: string;
 

@@ -162,4 +162,10 @@ export class CommentsRepository {
       .countDocuments({ authorId, isDeleted: false })
       .exec();
   }
+
+  async countByPostId(postId: string): Promise<number> {
+    return this.commentModel
+      .countDocuments({ postId, isDeleted: false })
+      .exec();
+  }
 }

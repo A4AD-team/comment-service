@@ -1,6 +1,5 @@
 import {
   IsString,
-  IsUUID,
   IsOptional,
   MaxLength,
   IsNotEmpty,
@@ -8,15 +7,15 @@ import {
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCommentDto {
-  @ApiProperty({ description: 'Post ID (UUID)' })
-  @IsUUID()
+  @ApiProperty({ description: 'Post ID (UUID or numeric string)' })
+  @IsString()
   @IsNotEmpty()
   postId: string;
 
   @ApiPropertyOptional({
     description: 'Parent comment ID for threaded replies',
   })
-  @IsUUID()
+  @IsString()
   @IsOptional()
   parentCommentId?: string;
 
@@ -26,8 +25,13 @@ export class CreateCommentDto {
   @MaxLength(4000)
   content: string;
 
-  @ApiProperty({ description: 'Author ID (UUID)' })
-  @IsUUID()
-  @IsNotEmpty()
-  authorId: string;
+  @ApiPropertyOptional({ description: 'Author ID (optional, will be taken from JWT if not provided)' })
+  @IsString()
+  @IsOptional()
+  authorId?: string;
+
+  @ApiPropertyOptional({ description: 'Author username (optional, will be taken from JWT if not provided)' })
+  @IsString()
+  @IsOptional()
+  authorUsername?: string;
 }

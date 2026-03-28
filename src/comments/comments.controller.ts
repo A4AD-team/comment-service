@@ -37,8 +37,16 @@ export class CommentsController {
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   async create(
     @Body() createCommentDto: CreateCommentDto,
+    @Headers('x-user-id') xUserId?: string,
+    @Headers('x-username') xUsername?: string,
     @Headers('x-request-id') requestId?: string,
   ): Promise<CommentResponse> {
+    if (!createCommentDto.authorId && xUserId) {
+      createCommentDto.authorId = xUserId;
+    }
+    if (!createCommentDto.authorUsername && xUsername) {
+      createCommentDto.authorUsername = xUsername;
+    }
     return this.commentsService.create(createCommentDto, requestId);
   }
 
@@ -49,6 +57,14 @@ export class CommentsController {
     @Query() query: GetCommentsQueryDto,
   ): Promise<PaginatedCommentsResponse<CommentResponse>> {
     return this.commentsService.findAll(query);
+  }
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get comment count for a post' })
+  @ApiResponse({ status: 200, description: 'Comment count retrieved successfully' })
+  async count(@Query('postId') postId: string): Promise<{ count: number }> {
+    const count = await this.commentsService.countByPostId(postId);
+    return { count };
   }
 
   @Get(':commentId')

@@ -13,6 +13,8 @@ async function bootstrap(): Promise<void> {
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT', 3000);
 
+  app.setGlobalPrefix('api/v1');
+
   app.use(helmet());
 
   app.useGlobalPipes(

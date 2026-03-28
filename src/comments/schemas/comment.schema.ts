@@ -18,6 +18,9 @@ export class Comment {
   authorId: string;
 
   @Prop({ required: true })
+  authorUsername: string;
+
+  @Prop({ required: true })
   content: string;
 
   @Prop({ default: 0 })

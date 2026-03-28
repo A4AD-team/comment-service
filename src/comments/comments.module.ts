@@ -10,6 +10,8 @@ import {
   makeHistogramProvider,
 } from '@willsoto/nestjs-prometheus';
 import { RabbitMQModuleConfig } from '../rabbitmq/rabbitmq.module';
+import { PostServiceClient } from '../common/post.service';
+import { ProfileServiceClient } from '../common/profile.service';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { RabbitMQModuleConfig } from '../rabbitmq/rabbitmq.module';
     CommentsService,
     CommentsRepository,
     CommentEventProducer,
+    PostServiceClient,
+    ProfileServiceClient,
     makeCounterProvider({
       name: 'comments_created_total',
       help: 'Total number of comments created',
